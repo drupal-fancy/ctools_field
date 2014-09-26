@@ -1,0 +1,5 @@
+name = Ctools field
+description = Stores ctools content in a field.
+core = 7.x
+dependencies[] = ds
+dependencies[] = ctools
