@@ -2,7 +2,7 @@
 
 /**
  * @file
- * A field storing arbitrary relations between entities.
+ * Main file of Ctools Field module.
  */
 
 /**

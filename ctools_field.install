@@ -1,4 +1,10 @@
 <?php
+
+/**
+ * @file
+ * Contains install and update functions for Ctools Field.
+ */
+
 /**
  * Implements hook_field_schema().
  */
