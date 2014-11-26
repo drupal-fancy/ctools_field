@@ -124,12 +124,22 @@ function ctools_field_field_formatter_view($entity_type, $entity, $field, $insta
   $element = array();
 
   foreach ($items as $delta => $item) {
+
+    if (is_string($item['value'])) {
+      $unserialized_value = unserialize($item['value']);
+    } else {
+      $unserialized_value = array();
+    }
+
+    $show_title = isset($unserialized_value['field_conf']['show_title']) ? $unserialized_value['field_conf']['show_title'] : false;
+    $title_wrapper = isset($unserialized_value['field_conf']['title_wrapper']) ? $unserialized_value['field_conf']['title_wrapper'] : 'h3';
+
     $field = array(
       'entity_type' => $entity_type,
       'entity' => $entity,
       'formatter_settings' => array(
-        'show_title' => FALSE,
-        'title_wrapper' => '',
+        'show_title' => $show_title,
+        'title_wrapper' => $title_wrapper,
         'ctools' => $item['value'],
       ),
     );
@@ -160,6 +170,15 @@ function ctools_field_field_widget_info() {
  */
 function ctools_field_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
   $value = isset($items[$delta]['value']) ? $items[$delta]['value'] : false;
+
+  if (is_string($items[$delta]['value'])) {
+    $unserialized_value = unserialize($items[$delta]['value']);
+  } else {
+    $unserialized_value = array();
+  }
+
+  $show_title = isset($unserialized_value['field_conf']['show_title']) ? $unserialized_value['field_conf']['show_title'] : false;
+  $title_wrapper = isset($unserialized_value['field_conf']['title_wrapper']) ? $unserialized_value['field_conf']['title_wrapper'] : 'h3';
 
   /* Get ds form css & js */
   form_load_include($form_state, 'inc', 'ds', 'includes/ds.field_ui');
@@ -194,12 +213,18 @@ function ctools_field_field_widget_form(&$form, &$form_state, $field, $instance,
     );
   }
 
-  // Load field.
+  // Wrap our fields into a fieldset.
+  $element['ctools_field'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('content'),
+  );
+
+  // Load content select/edit field.
   $ds_field = ds_ds_field_settings_form($field);
 
-  $element['select'] = $ds_field['select'];
+  $element['ctools_field']['select'] = $ds_field['select'];
 
-  // We need to change the parents so the ajax invoke can set the value
+  // We need to change the parents so the DS ajax invoke can set the value.
   $hidden_field = $ds_field['ctools'];
   $hidden_field['#parents'] = array(
     'fields',
@@ -209,6 +234,26 @@ function ctools_field_field_widget_form(&$form, &$form_state, $field, $instance,
     'ctools'
   );
   $element['hidden'] = $hidden_field;
+
+  $element['ctools_field']['show_title'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Show title'),
+    '#default_value' => $show_title,
+    '#attributes' => array(
+      'style' => 'margin-top: 1.5em;',
+    )
+  );
+
+  $element['ctools_field']['title_wrapper'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Title wrapper'),
+    '#default_value' => $title_wrapper,
+    '#states' => array(
+      'invisible' => array(
+        'input[name$="[ctools_field][show_title]"]' => array('checked' => FALSE),
+      ),
+    ),
+  );
 
   // Add a custom validation to set the correct field value.
   $element['#element_validate'][] = 'ctools_field_widget_validate';
@@ -223,9 +268,22 @@ function ctools_field_widget_validate($element, &$form_state) {
   $field = field_widget_field($element, $form_state);
   $instance = field_widget_instance($element, $form_state);
 
+  $show_title = $element['ctools_field']['show_title']['#value'];
+  $title_wrapper = $element['ctools_field']['title_wrapper']['#value'];
+
   // Move the value from the hidden field to the field value.
-  $hidden_value = $element['hidden']['#value'];
-  form_set_value($element, $hidden_value, $form_state);
+  if (is_string($element['hidden']['#value'])) {
+    $hidden_value = unserialize($element['hidden']['#value']);
+  } else {
+    $hidden_value = array();
+  }
+
+  $hidden_value['field_conf'] = array(
+    'show_title' => $show_title,
+    'title_wrapper' => $title_wrapper,
+  );
+
+  form_set_value($element, serialize($hidden_value), $form_state);
 }
 
 /**
