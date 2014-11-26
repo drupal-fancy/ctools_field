@@ -171,8 +171,8 @@ function ctools_field_field_widget_info() {
 function ctools_field_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
   $value = isset($items[$delta]['value']) ? $items[$delta]['value'] : false;
 
-  if (is_string($item['value'])) {
-    $unserialized_value = unserialize($item['value']);
+  if (is_string($items[$delta]['value'])) {
+    $unserialized_value = unserialize($items[$delta]['value']);
   } else {
     $unserialized_value = array();
   }
@@ -250,7 +250,7 @@ function ctools_field_field_widget_form(&$form, &$form_state, $field, $instance,
     '#default_value' => $title_wrapper,
     '#states' => array(
       'invisible' => array(
-        ':input[name="show_title"]' => array('checked' => FALSE),
+        'input[name$="[ctools_field][show_title]"]' => array('checked' => FALSE),
       ),
     ),
   );
