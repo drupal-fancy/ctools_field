@@ -138,12 +138,21 @@ function ctools_field_field_formatter_view($entity_type, $entity, $field, $insta
   $element = array();
 
   foreach ($items as $delta => $item) {
+    if (is_string($item['value'])) {
+      $unserialized_value = unserialize($item['value']);
+    } else {
+      $unserialized_value = array();
+    }
+
+    $show_title = isset($unserialized_value['field_conf']['show_title']) ? $unserialized_value['field_conf']['show_title'] : false;
+    $title_wrapper = isset($unserialized_value['field_conf']['title_wrapper']) ? $unserialized_value['field_conf']['title_wrapper'] : 'h3';
+
     $field = array(
       'entity_type' => $entity_type,
       'entity' => $entity,
       'formatter_settings' => array(
-        'show_title' => FALSE,
-        'title_wrapper' => '',
+        'show_title' => $show_title,
+        'title_wrapper' => $title_wrapper,
         'ctools' => $item['value'],
       ),
     );
