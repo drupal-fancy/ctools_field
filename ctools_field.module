@@ -137,7 +137,11 @@ function ctools_field_field_formatter_settings_summary($field, $instance, $view_
 function ctools_field_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
   $element = array();
 
+  ctools_include('content');
+  ctools_include('context');
+
   foreach ($items as $delta => $item) {
+    // Get the field configuration.
     if (is_string($item['value'])) {
       $unserialized_value = unserialize($item['value']);
     } else {
@@ -145,21 +149,41 @@ function ctools_field_field_formatter_view($entity_type, $entity, $field, $insta
     }
 
     $show_title = isset($unserialized_value['field_conf']['show_title']) ? $unserialized_value['field_conf']['show_title'] : false;
-    $title_wrapper = isset($unserialized_value['field_conf']['title_wrapper']) ? $unserialized_value['field_conf']['title_wrapper'] : 'h3';
+    $title_wrapper = isset($unserialized_value['field_conf']['title_wrapper']) ? trim($unserialized_value['field_conf']['title_wrapper']) : 'h3';
+    $type = $unserialized_value['type'];
+    $subtype = $unserialized_value['subtype'];
+    $conf = $unserialized_value['conf'];
+    $keywords = $arguments = $contexts = array();
+    $content = '';
 
-    $field = array(
-      'entity_type' => $entity_type,
-      'entity' => $entity,
-      'formatter_settings' => array(
-        'show_title' => $show_title,
-        'title_wrapper' => $title_wrapper,
-        'ctools' => $item['value'],
-      ),
-    );
+    // Create the entity context.
+    $context_arguments = array(array(
+      'keyword' => $entity_type,
+      'identifier' => drupal_ucfirst($entity_type) . ' being viewed',
+      'id' => 1,
+      'name' => 'entity_id:' . $entity_type,
+      'settings' => array(),
+    ));
+    ctools_context_get_context_from_arguments($context_arguments, $contexts, array($entity));
 
-    $rendered_content = ds_render_ctools_field($field);
+    // Build the content.
+    $data = ctools_content_render($type, $subtype, $conf, $keywords, $arguments, $contexts);
 
-    $element[$delta] = array('#markup' => $rendered_content);
+    // Render the content.
+    if (!empty($data->content)) {
+      $content = '';
+      if ($show_title) {
+        $content .= '<' . check_plain($title_wrapper) . '>' . $data->title . '</' . check_plain($title_wrapper) . '>';
+      }
+      if (is_array($data->content)) {
+        $content .= drupal_render($data->content);
+      }
+      else {
+        $content .= $data->content;
+      }
+    }
+
+    $element[$delta] = array('#markup' => $content);
   }
 
 
@@ -191,7 +215,7 @@ function ctools_field_field_widget_form(&$form, &$form_state, $field, $instance,
   }
 
   $show_title = isset($unserialized_value['field_conf']['show_title']) ? $unserialized_value['field_conf']['show_title'] : false;
-  $title_wrapper = isset($unserialized_value['field_conf']['title_wrapper']) ? $unserialized_value['field_conf']['title_wrapper'] : 'h3';
+  $title_wrapper = isset($unserialized_value['field_conf']['title_wrapper']) ? trim($unserialized_value['field_conf']['title_wrapper']) : 'h3';
 
   /* Get ds form css & js */
   form_load_include($form_state, 'inc', 'ds', 'includes/ds.field_ui');
