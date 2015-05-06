@@ -217,19 +217,14 @@ function ctools_field_field_widget_form(&$form, &$form_state, $field, $instance,
   $show_title = isset($unserialized_value['field_conf']['show_title']) ? $unserialized_value['field_conf']['show_title'] : false;
   $title_wrapper = isset($unserialized_value['field_conf']['title_wrapper']) ? trim($unserialized_value['field_conf']['title_wrapper']) : 'h3';
 
-  /* Get ds form css & js */
-  form_load_include($form_state, 'inc', 'ds', 'includes/ds.field_ui');
-  $cloned_form = $element;
-  $cloned_form['#view_mode'] = 'fake';
-  $cloned_form['#submit'] = array();
-
-  $fake_form_state = $form_state;
-  ds_field_ui_fields_layouts($cloned_form, $fake_form_state);
-
-  if (!array_key_exists('#attached', $form)) {
+  // Attach the DS css & js.
+  if (!isset($element['#attached'])) {
     $element['#attached'] = array();
   }
-  $element['#attached'] = array_merge($element['#attached'], $cloned_form['#attached']);
+  $element['#attached'] = array_merge_recursive($element['#attached'], array(
+    'js' => array(drupal_get_path('module', 'ds') . '/js/ds.admin.js'),
+    'css' => array(drupal_get_path('module', 'ds') . '/css/ds.admin.css')
+  ));
 
   // Fake ds ctools/dynamic content field.
   $field = array(
@@ -258,11 +253,12 @@ function ctools_field_field_widget_form(&$form, &$form_state, $field, $instance,
   );
 
   // Load content select/edit field.
+  form_load_include($form_state, 'inc', 'ds', 'includes/ds.field_ui');
   $ds_field = ds_ds_field_settings_form($field);
 
   $element['ctools_field']['select'] = $ds_field['select'];
 
-  // We need to change the parents so the ajax invoke can set the value
+  // We need to change the parents so the ajax invoke can set the value.
   $hidden_field = $ds_field['ctools'];
   $hidden_field['#parents'] = array(
     'fields',
