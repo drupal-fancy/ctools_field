@@ -145,7 +145,7 @@ function ctools_field_field_formatter_view($entity_type, $entity, $field, $insta
     if (is_string($item['value'])) {
       $unserialized_value = unserialize($item['value']);
     } else {
-      $unserialized_value = array();
+      continue;
     }
 
     $show_title = isset($unserialized_value['field_conf']['show_title']) ? $unserialized_value['field_conf']['show_title'] : false;
