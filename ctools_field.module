@@ -144,7 +144,13 @@ function ctools_field_field_formatter_view($entity_type, $entity, $field, $insta
     // Get the field configuration.
     if (is_string($item['value'])) {
       $unserialized_value = unserialize($item['value']);
-    } else {
+    }
+    else {
+      $unserialized_value = array();
+    }
+
+    // Check whether field has a configured content type.
+    if (empty($unserialized_value['type']) || empty($unserialized_value['subtype']) || empty($unserialized_value['conf'])) {
       continue;
     }
 
